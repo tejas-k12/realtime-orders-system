@@ -1,119 +1,122 @@
-# Real-Time Orders Update System
+# Real-Time Order Dashboard
 
-## Documentation
-
----
-
-## Approach Used
-
-The system was designed using an event-driven architecture to provide real-time updates to connected clients whenever changes occur in the database.
-
-Instead of using polling (where clients repeatedly request updates from the server), the solution uses PostgreSQL’s native LISTEN/NOTIFY mechanism along with WebSockets through Socket.IO.
+A real-time order tracking dashboard built with **PostgreSQL LISTEN/NOTIFY**, **Node.js**, and **Socket.IO**. Updates are pushed instantly to all connected clients whenever an order is inserted, updated, or deleted — no polling required.
 
 ---
 
-## Working
+## Approach
 
-A trigger is attached to the `orders` table.
+This system uses an **event-driven architecture** to deliver real-time updates to connected clients.
 
-Whenever an insert, update, or delete operation occurs:
-- PostgreSQL automatically generates a notification using `pg_notify()`
+Instead of polling (where clients repeatedly request updates), the solution leverages PostgreSQL's native `LISTEN/NOTIFY` mechanism paired with WebSockets via Socket.IO.
 
-The Node.js backend continuously listens for these notifications using:
+### How It Works
+
+1. A trigger is attached to the `orders` table.
+2. On every `INSERT`, `UPDATE`, or `DELETE`:
+   - PostgreSQL fires `pg_notify()` with a JSON payload.
+   - The Node.js backend, listening via `LISTEN order_changes;`, receives the event.
+   - The backend broadcasts the update to all connected clients using Socket.IO.
+3. The frontend dashboard receives the update **instantly** and re-renders without a page refresh.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Reason |
+|---|---|---|
+| Database | PostgreSQL `LISTEN/NOTIFY` | Built-in real-time notifications — no extra message broker needed |
+| Backend | Node.js + Socket.IO | Persistent WebSocket connections for low-latency push |
+| Frontend | HTML + CSS + JavaScript | Lightweight browser dashboard; easy to verify live updates |
+
+---
+
+## Getting Started
+
+### 1. Install Dependencies
+
+```bash
+npm install express socket.io pg cors
+npm install -D nodemon
+```
+
+### 2. Set Up PostgreSQL
+
+Ensure PostgreSQL is installed and running, then create and connect to the database:
 
 ```sql
-listen order_changes;
-
-Once the backend receives the event:
-
-it broadcasts the update to all connected clients using Socket.IO
-
-The frontend dashboard receives the update instantly and updates the UI in real time without requiring a page refresh.
-
-The frontend client is implemented using HTML, CSS, and JavaScript and acts as a lightweight browser-based dashboard.
-
-How to Run the Solution
-1. Install Dependencies
-npm install express socket.io pg cors
-
-Install development dependency:
-
-npm install -D nodemon
-2. Start PostgreSQL
-
-Ensure PostgreSQL is installed and running.
-
-Create database:
-
-create database realtime_orders;
-
-Connect to database:
-
+CREATE DATABASE realtime_orders;
 \c realtime_orders;
-3. Create Orders Table
-create table orders (
-    id serial primary key,
-    customer_name varchar(100),
-    product_name varchar(100),
-    status varchar(20),
-    updated_at timestamp default current_timestamp
+```
+
+### 3. Create the `orders` Table
+
+```sql
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(100),
+    product_name VARCHAR(100),
+    status VARCHAR(20),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-4. Create Trigger Function
-create or replace function notify_order_change()
-returns trigger as $$
-declare
-    payload json;
-begin
-    if tg_op = 'delete' then
-        payload = json_build_object(
-            'operation', tg_op,
-            'data', row_to_json(old)
-        );
-    else
-        payload = json_build_object(
-            'operation', tg_op,
-            'data', row_to_json(new)
-        );
-    end if;
+```
 
-    perform pg_notify('order_changes', payload::text);
+### 4. Create the Trigger Function
 
-    return null;
-end;
-$$ language plpgsql;
-5. Create Trigger
-create trigger order_change_trigger
-after insert or update or delete
-on orders
-for each row
-execute function notify_order_change();
-6. Start Backend Server
+```sql
+CREATE OR REPLACE FUNCTION notify_order_change()
+RETURNS TRIGGER AS $$
+DECLARE
+    payload JSON;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        payload = json_build_object(
+            'operation', TG_OP,
+            'data', row_to_json(OLD)
+        );
+    ELSE
+        payload = json_build_object(
+            'operation', TG_OP,
+            'data', row_to_json(NEW)
+        );
+    END IF;
+
+    PERFORM pg_notify('order_changes', payload::text);
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 5. Create the Trigger
+
+```sql
+CREATE TRIGGER order_change_trigger
+AFTER INSERT OR UPDATE OR DELETE
+ON orders
+FOR EACH ROW
+EXECUTE FUNCTION notify_order_change();
+```
+
+### 6. Start the Backend
+
+```bash
 npm run dev
-7. Open Frontend
+```
 
-Open browser:
+### 7. Open the Dashboard
 
+Navigate to:
 http://localhost:5000
-Why PostgreSQL LISTEN/NOTIFY?
+---
 
-PostgreSQL provides built-in support for real-time notifications through:
+## Design Decisions
 
-LISTEN
-NOTIFY
+**Why PostgreSQL `LISTEN/NOTIFY`?**
+PostgreSQL ships with built-in pub/sub support through `LISTEN` and `NOTIFY`. This eliminates the need for a separate message broker (e.g., Redis, Kafka) for lightweight real-time use cases.
 
-This makes it suitable for lightweight real-time systems without requiring additional message brokers.
+**Why Socket.IO?**
+Socket.IO provides a persistent, bidirectional WebSocket channel between the server and clients, with automatic fallbacks for older environments.
 
-Why Socket.IO?
-
-Socket.IO provides persistent WebSocket communication between the backend and connected clients.
-
-Benefits:
-
-real-time bidirectional communication
-automatic reconnection
-event-based architecture
-Why Browser-Based Frontend?
-
-A browser dashboard provides a simple and visual way to demonstrate real-time updates.
-
-It allows evaluators to verify instantly that updates are being pushed without refreshing the page.
+**Why a browser-based frontend?**
+A browser dashboard gives an immediate, visual way to confirm that updates arrive in real time — no tooling required beyond opening a tab.
