@@ -31,22 +31,58 @@ Instead of polling (where clients repeatedly request updates), the solution leve
 
 ---
 
-## Getting Started
+## Prerequisites
 
-### 1. Install Dependencies
+Make sure the following are installed before proceeding:
 
+### Node.js (v18+ recommended)
+
+- **Download:** https://nodejs.org/en/download
+- **Verify installation:**
 ```bash
-npm install express socket.io pg cors
-npm install -D nodemon
+  node -v
+  npm -v
 ```
 
-### 2. Set Up PostgreSQL
+### PostgreSQL (v14+ recommended)
 
-Ensure PostgreSQL is installed and running, then create and connect to the database:
+- **Windows:** https://www.postgresql.org/download/windows/
+- **macOS:** https://www.postgresql.org/download/macos/ (or via Homebrew: `brew install postgresql`)
+- **Linux (Ubuntu/Debian):**
+```bash
+  sudo apt update
+  sudo apt install postgresql postgresql-contrib
+```
+- **Verify installation:**
+```bash
+  psql --version
+```
+- **Start the PostgreSQL service:**
+```bash
+  # macOS (Homebrew)
+  brew services start postgresql
 
-```sql
-CREATE DATABASE realtime_orders;
-\c realtime_orders;
+  # Linux
+  sudo systemctl start postgresql
+  sudo systemctl enable postgresql
+
+  # Windows
+  # PostgreSQL runs as a service automatically after installation
+```
+
+### Git (optional, for cloning)
+
+- **Download:** https://git-scm.com/downloads
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
 ```
 
 ### 3. Create the `orders` Table
