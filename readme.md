@@ -1,6 +1,6 @@
 # Real-Time Order Dashboard
 
-A real-time order tracking dashboard built with **PostgreSQL LISTEN/NOTIFY**, **Node.js**, and **Socket.IO**. Updates are pushed instantly to all connected clients whenever an order is inserted, updated, or deleted — no polling required.
+A real-time order tracking dashboard built with **PostgreSQL LISTEN/NOTIFY**, **Node.js**, and **Socket.IO**. Updates are pushed instantly to all connected clients whenever an order is inserted, updated, or deleted - no polling required.
 
 ---
 
