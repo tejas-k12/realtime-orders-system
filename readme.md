@@ -204,17 +204,6 @@ The dashboard will update in real time without any page refresh.
 
 ---
 
-## Project Structure
-├── server.js, db.js          # Node.js backend (Express + Socket.IO + pg)
-├── public/
-│   └── index.html, styles.css, script.js     # Frontend dashboard
-├── package.json
-└── README.md
-
-> Adjust paths above to match your actual project structure.
-
----
-
 ## Design Decisions
 
 **Why PostgreSQL `LISTEN/NOTIFY`?**
