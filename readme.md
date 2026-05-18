@@ -85,7 +85,33 @@ git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
 ```
 
-### 3. Create the `orders` Table
+### 2. Install Node Dependencies
+
+```bash
+npm install express socket.io pg cors
+npm install -D nodemon
+```
+
+---
+
+## Database Setup
+
+### 3. Create the Database
+
+Open a PostgreSQL shell:
+
+```bash
+psql -U postgres
+```
+
+Then run:
+
+```sql
+CREATE DATABASE realtime_orders;
+\c realtime_orders;
+```
+
+### 4. Create the `orders` Table
 
 ```sql
 CREATE TABLE orders (
@@ -97,7 +123,7 @@ CREATE TABLE orders (
 );
 ```
 
-### 4. Create the Trigger Function
+### 5. Create the Trigger Function
 
 ```sql
 CREATE OR REPLACE FUNCTION notify_order_change()
@@ -124,7 +150,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### 5. Create the Trigger
+### 6. Create the Trigger
 
 ```sql
 CREATE TRIGGER order_change_trigger
@@ -134,16 +160,59 @@ FOR EACH ROW
 EXECUTE FUNCTION notify_order_change();
 ```
 
-### 6. Start the Backend
+---
+
+## Running the App
+
+### 7. Configure Database Connection
+
+Make sure your backend's database config matches your local PostgreSQL credentials. Typically in a `db.js` or `server.js` file:
+
+```js
+const client = new Client({
+  host: 'localhost',
+  port: 5432,
+  database: 'realtime_orders',
+  user: 'postgres',       // your PostgreSQL username
+  password: 'yourpassword' // your PostgreSQL password
+});
+```
+
+### 8. Start the Backend Server
 
 ```bash
 npm run dev
 ```
 
-### 7. Open the Dashboard
+### 9. Open the Dashboard
 
-Navigate to:
+Open your browser and navigate to:
 http://localhost:5000
+
+You should see the live dashboard. To test it, open a new terminal, connect to the database, and insert a row:
+
+```bash
+psql -U postgres -d realtime_orders
+```
+
+```sql
+INSERT INTO orders (customer_name, product_name, status)
+VALUES ('Alice', 'Laptop', 'pending');
+```
+
+The dashboard will update in real time without any page refresh.
+
+---
+
+## Project Structure
+├── server.js, db.js          # Node.js backend (Express + Socket.IO + pg)
+├── public/
+│   └── index.html, styles.css, script.js     # Frontend dashboard
+├── package.json
+└── README.md
+
+> Adjust paths above to match your actual project structure.
+
 ---
 
 ## Design Decisions
